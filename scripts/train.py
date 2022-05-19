@@ -4,6 +4,7 @@ import datetime
 import os
 import shutil
 import sys
+import re
 
 cur_path = os.path.abspath(os.path.dirname(__file__))
 root_path = os.path.split(cur_path)[0]
@@ -38,7 +39,7 @@ def parse_args():
                             'densenet121', 'densenet161', 'densenet169', 'densenet201'],
                         help='backbone name (default: vgg16)')
     parser.add_argument('--dataset', type=str, default='pascal_voc',
-                        choices=['pascal_voc', 'pascal_aug', 'ade20k', 'citys', 'sbu'],
+                        choices=['ughent','pascal_voc', 'pascal_aug', 'ade20k', 'citys', 'sbu'],
                         help='dataset name (default: pascal_voc)')
     parser.add_argument('--base-size', type=int, default=520,
                         help='base image size')
@@ -154,7 +155,7 @@ class Trainer(object):
 
         # create network
         BatchNorm2d = nn.SyncBatchNorm if args.distributed else nn.BatchNorm2d
-        self.model = get_segmentation_model(model=args.model, dataset=args.dataset, backbone=args.backbone,
+        self.model = get_segmentation_model(pretrained_base=False, model=args.model, dataset=args.dataset, backbone=args.backbone,
                                             aux=args.aux, jpu=args.jpu, norm_layer=BatchNorm2d).to(self.device)
 
         # resume checkpoint if needed
@@ -166,7 +167,7 @@ class Trainer(object):
                 self.model.load_state_dict(torch.load(args.resume, map_location=lambda storage, loc: storage))
 
         # create criterion
-        self.criterion = get_segmentation_loss(args.model, use_ohem=args.use_ohem, aux=args.aux,
+        self.criterion = get_segmentation_loss(args.model, nclass=20, use_ohem=args.use_ohem, aux=args.aux,
                                                aux_weight=args.aux_weight, ignore_index=-1).to(self.device)
 
         # optimizer, for model just includes pretrained, head and auxlayer
@@ -191,6 +192,9 @@ class Trainer(object):
 
         if args.distributed:
             self.model = nn.parallel.DistributedDataParallel(self.model, device_ids=[args.local_rank],
+        
+        
+        
                                                              output_device=args.local_rank)
 
         # evaluation metrics
@@ -209,7 +213,6 @@ class Trainer(object):
         self.model.train()
         for iteration, (images, targets, _) in enumerate(self.train_loader):
             iteration = iteration + 1
-            self.lr_scheduler.step()
 
             images = images.to(self.device)
             targets = targets.to(self.device)
@@ -226,6 +229,7 @@ class Trainer(object):
             self.optimizer.zero_grad()
             losses.backward()
             self.optimizer.step()
+            self.lr_scheduler.step()
 
             eta_seconds = ((time.time() - start_time) / iteration) * (max_iters - iteration)
             eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))

@@ -134,9 +134,13 @@ AwsmSemSegPytorch-env/
 .vscode/launch.json
 .vscode/settings.json
 
-
 # builded files
 core/nn/sync_bn/lib/gpu/build.ninja
 core/nn/sync_bn/lib/gpu/.ninja_log
 core/nn/sync_bn/lib/gpu/.ninja_deps
 
+# Emacs stuff
+**/#*#
+**/*~
+**/.#*
+scripts/models
