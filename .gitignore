@@ -143,5 +143,5 @@ core/nn/sync_bn/lib/gpu/.ninja_deps
 **/#*#
 **/*~
 **/.#*
-scripts/models
-100_augmentations.png
+wandb
+**/wandb

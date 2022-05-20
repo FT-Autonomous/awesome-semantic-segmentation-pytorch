@@ -1,0 +1,14 @@
+metric:
+  name: test_score
+  goal: maximize
+method: bayes
+parameters:
+  model:
+    values: ['cgnet', 'icnet']
+  dataset:
+    values: ['danish', 'ughent']
+command:
+  - ${env}
+  - ${interpreter}
+  - scripts/train.py
+  - ${args}

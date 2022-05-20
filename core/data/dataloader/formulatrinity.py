@@ -45,6 +45,7 @@ class FormulaTrinitySegmentation(SegmentationDataset):
     def __init__(self, root='datasets/ughent', split='train', mode=None, transform=None, **kwargs):
         super().__init__(root, split, mode, transform, **kwargs)
         self.num_samples = 10
+        self.p_affine = 0.5 if 'ughent' not in root else 0
         self.images = sorted(glob(os.path.join(root, "imgs/*")))
         self.masks = sorted(glob(os.path.join(root, "masks/*")))
         
@@ -59,7 +60,7 @@ class FormulaTrinitySegmentation(SegmentationDataset):
         
         # synchronized transform
         if self.mode == 'train':
-            img, mask = augment(img, mask)
+            img, mask = augment(img, mask, p_affine=self.p_affine)
             img, mask = self._sync_transform(img, mask)
         elif self.mode == 'val':
             img, mask = self._val_sync_transform(img, mask)

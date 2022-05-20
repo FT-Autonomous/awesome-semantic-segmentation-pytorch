@@ -10,6 +10,8 @@ cur_path = os.path.abspath(os.path.dirname(__file__))
 root_path = os.path.split(cur_path)[0]
 sys.path.append(root_path)
 
+import wandb
+
 import torch
 import torch.nn as nn
 import torch.utils.data as data
@@ -23,7 +25,6 @@ from core.utils.distributed import *
 from core.utils.logger import setup_logger
 from core.utils.lr_scheduler import WarmupPolyLR
 from core.utils.score import SegmentationMetric
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Semantic Segmentation Training With Pytorch')
@@ -91,6 +92,10 @@ def parse_args():
                         help='run validation every val-epoch')
     parser.add_argument('--skip-val', action='store_true', default=False,
                         help='skip validation during training')
+    parser.add_argument('--project', type=str,
+                        help='wandb project name')
+    parser.add_argument('--sweep', action='store_true',
+                        help='run as part of a sweep.')
     args = parser.parse_args()
 
     # default settings for epochs, batch_size and lr
@@ -116,6 +121,10 @@ def parse_args():
             'sbu': 0.001,
         }
         args.lr = lrs[args.dataset.lower()] / 8 * args.batch_size
+
+    if args.project:
+        wandb.init(config=args, project=args.project)
+        
     return args
 
 
@@ -160,7 +169,7 @@ class Trainer(object):
             if os.path.isfile(args.resume):
                 name, ext = os.path.splitext(args.resume)
                 assert ext == '.pkl' or '.pth', 'Sorry only .pth and .pkl files supported.'
-                print('Resuming training, loading {}...'.format(args.resume))
+                print(f'Resuming training, loading {args.resume}...')
                 self.model.load_state_dict(torch.load(args.resume, map_location=lambda storage, loc: storage))
 
         # create criterion
@@ -198,6 +207,7 @@ class Trainer(object):
         self.metric = SegmentationMetric(train_dataset.num_class)
 
         self.best_pred = 0.0
+        self.run = wandb.init()
 
     def train(self):
         save_to_disk = get_rank() == 0
@@ -205,7 +215,7 @@ class Trainer(object):
         log_per_iters, val_per_iters = self.args.log_iter, self.args.val_epoch * self.args.iters_per_epoch
         save_per_iters = self.args.save_epoch * self.args.iters_per_epoch
         start_time = time.time()
-        logger.info('Start training, Total Epochs: {:d} = Total Iterations {:d}'.format(epochs, max_iters))
+        logger.info(f'Start training, Total Epochs: {epochs:d}, Total Iterations {max_iters:d}')
 
         self.model.train()
         for iteration, (images, targets, _) in enumerate(self.train_loader):
@@ -230,12 +240,14 @@ class Trainer(object):
 
             eta_seconds = ((time.time() - start_time) / iteration) * (max_iters - iteration)
             eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
+            cost_time_string = str(datetime.timedelta(seconds=int(time.time() - start_time)))
 
             if iteration % log_per_iters == 0 and save_to_disk:
-                logger.info(
-                    "Iters: {:d}/{:d} || Lr: {:.6f} || Loss: {:.4f} || Cost Time: {} || Estimated Time: {}".format(
-                        iteration, max_iters, self.optimizer.param_groups[0]['lr'], losses_reduced.item(),
-                        str(datetime.timedelta(seconds=int(time.time() - start_time))), eta_string))
+                logger.info(f"Iters: {iteration:d}/{max_iters:d}"
+                            f" || Lr: {self.optimizer.param_groups[0]['lr']:.6f}"
+                            f" || Loss: {loss_dict_reduced.item():.4f}"
+                            f" || Cost Time: {cost_time_string}"
+                            f" || Estimated Time: {eta_string}")
 
             if iteration % save_per_iters == 0 and save_to_disk:
                 save_checkpoint(self.model, self.args, is_best=False)
@@ -244,15 +256,16 @@ class Trainer(object):
                 self.validation()
                 self.model.train()
 
+            wandb.log({'training_losses/'+loss:value.item() for loss,value in loss_dict.items()}
+                      | {'training_losses/total':losses_reduced.item()})
+
         save_checkpoint(self.model, self.args, is_best=False)
         total_training_time = time.time() - start_time
         total_training_str = str(datetime.timedelta(seconds=total_training_time))
-        logger.info(
-            "Total training time: {} ({:.4f}s / it)".format(
-                total_training_str, total_training_time / max_iters))
-
+        logger.info(f"Total training time: {total_training_str} ({total_training_time/max_iters:.4f}s / it)")
+        wandb.finish()
+        
     def validation(self):
-        # total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
         is_best = False
         self.metric.reset()
         if self.args.distributed:
@@ -269,29 +282,39 @@ class Trainer(object):
                 outputs = model(image)
             self.metric.update(outputs[0], target)
             pixAcc, mIoU = self.metric.get()
-            logger.info("Sample: {:d}, Validation pixAcc: {:.3f}, mIoU: {:.3f}".format(i + 1, pixAcc, mIoU))
-
+            logger.info(f"Sample: {i+1:d}, Validation pixAcc: {pixAcc:.3f}, mIoU: {mIoU:.3f}")
         new_pred = (pixAcc + mIoU) / 2
+        metadata = {
+            'test_score':new_pred,
+            'test/pixelAcc':pixAcc,
+            'test/mIoU':mIoU
+        }
+        wandb.log(metadata, step=0)
         if new_pred > self.best_pred:
             is_best = True
             self.best_pred = new_pred
-        save_checkpoint(self.model, self.args, is_best)
+        save_checkpoint(self.model, self.args, is_best, metadata)
         synchronize()
 
 
-def save_checkpoint(model, args, is_best=False):
+def save_checkpoint(model, args, is_best=False, metadata={}):
     """Save Checkpoint"""
     directory = os.path.expanduser(args.save_dir)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = '{}_{}_{}.pth'.format(args.model, args.backbone, args.dataset)
+    base = f'{args.model}_{args.backbone}_{args.dataset}'
+    filename = base + '.pth'
     filename = os.path.join(directory, filename)
 
     if args.distributed:
         model = model.module
     torch.save(model.state_dict(), filename)
+    artifact = wandb.Artifact(base)
+    artifact.add_file(filename)
+    artifact.metadata = metadata
+    wandb.log_artifact(artifact)
     if is_best:
-        best_filename = '{}_{}_{}_best_model.pth'.format(args.model, args.backbone, args.dataset)
+        best_filename = base + '_best_model.pth'
         best_filename = os.path.join(directory, best_filename)
         shutil.copyfile(filename, best_filename)
 
@@ -315,11 +338,10 @@ if __name__ == '__main__':
         synchronize()
     args.lr = args.lr * num_gpus
 
-    logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(), filename='{}_{}_{}_log.txt'.format(
-        args.model, args.backbone, args.dataset))
-    logger.info("Using {} GPUs".format(num_gpus))
+    logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),
+                          filename=f'{args.model}_{args.backbone}_{args.dataset}_log.txt')
+    logger.info(f"Using {num_gpus} GPUs")
     logger.info(args)
-
     trainer = Trainer(args)
     trainer.train()
     torch.cuda.empty_cache()
