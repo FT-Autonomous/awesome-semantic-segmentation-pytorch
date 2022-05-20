@@ -2,6 +2,7 @@
 This module provides data loaders and transformers for popular vision datasets.
 """
 from .ughent import UGhentSegmentation
+from .danish import DanishSegmentation
 from .mscoco import COCOSegmentation
 from .cityscapes import CitySegmentation
 from .ade import ADE20KSegmentation
@@ -16,9 +17,12 @@ datasets = {
     'coco': COCOSegmentation,
     'citys': CitySegmentation,
     'sbu': SBUSegmentation,
-    'ughent':UGhentSegmentation
+    'ughent':UGhentSegmentation,
+    'danish':DanishSegmentation
 }
 
+def get_segmentation_dataset_names():
+    return list(datasets.keys())
 
 def get_segmentation_dataset(name, **kwargs):
     """Segmentation Datasets"""

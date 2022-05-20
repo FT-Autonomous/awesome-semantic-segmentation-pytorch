@@ -16,7 +16,7 @@ import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
-from core.data.dataloader import get_segmentation_dataset
+from core.data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
 from core.models.model_zoo import get_segmentation_model
 from core.utils.loss import get_segmentation_loss
 from core.utils.distributed import *
@@ -39,7 +39,7 @@ def parse_args():
                             'densenet121', 'densenet161', 'densenet169', 'densenet201'],
                         help='backbone name (default: vgg16)')
     parser.add_argument('--dataset', type=str, default='pascal_voc',
-                        choices=['ughent','pascal_voc', 'pascal_aug', 'ade20k', 'citys', 'sbu'],
+                        choices=get_segmentation_dataset_names(),
                         help='dataset name (default: pascal_voc)')
     parser.add_argument('--base-size', type=int, default=520,
                         help='base image size')
@@ -167,7 +167,7 @@ class Trainer(object):
                 self.model.load_state_dict(torch.load(args.resume, map_location=lambda storage, loc: storage))
 
         # create criterion
-        self.criterion = get_segmentation_loss(args.model, nclass=20, use_ohem=args.use_ohem, aux=args.aux,
+        self.criterion = get_segmentation_loss(args.model, nclass=train_dataset.num_class(), use_ohem=args.use_ohem, aux=args.aux,
                                                aux_weight=args.aux_weight, ignore_index=-1).to(self.device)
 
         # optimizer, for model just includes pretrained, head and auxlayer

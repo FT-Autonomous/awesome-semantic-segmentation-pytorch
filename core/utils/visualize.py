@@ -1,6 +1,12 @@
+import cv2 as cv
 import os
 import numpy as np
 from PIL import Image
+import random
+import matplotlib.pyplot as plt
+import matplotlib
+import argparse
+from ..data.dataloader import get_segmentation_dataset
 
 __all__ = ['get_color_pallete', 'print_iou', 'set_img_color',
            'show_prediction', 'show_colorful_images', 'save_colorful_images']
@@ -156,3 +162,65 @@ cityspallete = [
     0, 0, 230,
     119, 11, 32,
 ]
+
+
+def mask_to_color(prediction):
+    # This really could be an array
+    formula_trinity_palette = np.array([
+        [0, 0, 0], # -1
+        [0, 0, 255], # Blue
+        [100, 100, 20], # Yellow
+        [100, 50, 0], # Large Orange
+        [120, 30, 0],  # Orange 
+    ], dtype=np.uint8)
+    
+    return formula_trinity_palette[prediction]
+
+def main():
+    matplotlib.use('TkAgg')
+    
+    parser = argparse.ArgumentParser(description='Test the UGhent data loader')
+
+    parser.add_argument('--dataset', type=str, default='danish',
+                        help='the datset to use')
+    parser.add_argument('--augment', action='store_true',
+                        help='whether or not to apply image augmentations')
+    parser.add_argument('--once', dest='number_to_generate', action='store_const', const=1,
+                        help='one image will be displayed and the program will exit')
+    parser.add_argument('--output-basename', type=str, default=None,
+                        help='the program will write images to [output_basename]_N.png and exit ')
+    parser.add_argument('--number-to-generate', type=int, default=1,
+                        help='the number of images to generate')
+    parser.add_argument('--geometry', metavar='ROWSxCOLUMNS', type=str, default='1x1',
+                        help='the number of rows and columns that the figures should have')
+    parser.add_argument('--debug', action='store_true',
+                        help='include a breakpoint right after arguments are parsed')
+    args = parser.parse_args()
+    
+    dataset = get_segmentation_dataset(args.dataset, split='train' if args.augment else 'val')
+    
+    if args.debug:
+        i, m, _ = dataset.sample()
+        breakpoint()
+    
+    rows, columns = [int(dimension) for dimension in args.geometry.split('x')]
+    
+    index = 0
+
+    if args.number_to_generate is None:
+        args.number_to_generate = 1
+    
+    while index < args.number_to_generate:
+        figure, axes = plt.subplots(rows, columns)
+        images = random.choices(dataset, k=rows*columns)
+        for axis, (image, mask, _) in zip(axes if len(images) != 1 else [axes], images):
+            axis.tick_params(which='both', left=False, labelleft=False, labelbottom=False, bottom=False)
+            axis.imshow(cv.addWeighted(image, 0.6, mask_to_color(mask), 0.4, 0))
+        if args.output_basename is None:
+            plt.show()
+        else:
+            figure.savefig(args.output_basename+f"_{index}.png")
+        index += 1
+        
+if __name__ == '__main__':
+    main()
