@@ -17,7 +17,7 @@ import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
 from core.data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
-from core.models.model_zoo import get_segmentation_model
+from core.models.model_zoo import get_segmentation_model, get_segmentation_model_names
 from core.utils.loss import get_segmentation_loss
 from core.utils.distributed import *
 from core.utils.logger import setup_logger
@@ -29,10 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Semantic Segmentation Training With Pytorch')
     # model and dataset
     parser.add_argument('--model', type=str, default='fcn',
-                        choices=['fcn32s', 'fcn16s', 'fcn8s', 'fcn', 'psp', 'deeplabv3', 
-                            'deeplabv3_plus', 'danet', 'denseaspp', 'bisenet', 'encnet', 
-                            'dunet', 'icnet', 'enet', 'ocnet', 'psanet', 'cgnet', 'espnet', 
-                            'lednet', 'dfanet','swnet'],
+                        choices=get_segmentation_model_names(),
                         help='model name (default: fcn32s)')
     parser.add_argument('--backbone', type=str, default='resnet50',
                         choices=['vgg16', 'resnet18', 'resnet50', 'resnet101', 'resnet152', 
@@ -167,7 +164,7 @@ class Trainer(object):
                 self.model.load_state_dict(torch.load(args.resume, map_location=lambda storage, loc: storage))
 
         # create criterion
-        self.criterion = get_segmentation_loss(args.model, nclass=train_dataset.num_class(), use_ohem=args.use_ohem, aux=args.aux,
+        self.criterion = get_segmentation_loss(args.model, nclass=train_dataset.num_class, use_ohem=args.use_ohem, aux=args.aux,
                                                aux_weight=args.aux_weight, ignore_index=-1).to(self.device)
 
         # optimizer, for model just includes pretrained, head and auxlayer

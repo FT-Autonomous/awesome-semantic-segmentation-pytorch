@@ -87,28 +87,31 @@ def get_model(name, **kwargs):
 def get_model_list():
     return _models.keys()
 
+models = {
+    'fcn32s': get_fcn32s,
+    'fcn16s': get_fcn16s,
+    'fcn8s': get_fcn8s,
+    'fcn': get_fcn,
+    'psp': get_psp,
+    'deeplabv3': get_deeplabv3,
+    'deeplabv3_plus': get_deeplabv3_plus,
+    'danet': get_danet,
+    'denseaspp': get_denseaspp,
+    'bisenet': get_bisenet,
+    'encnet': get_encnet,
+    'dunet': get_dunet,
+    'icnet': get_icnet,
+    'enet': get_enet,
+    'ocnet': get_ocnet,
+    'psanet': get_psanet,
+    'cgnet': get_cgnet,
+    'espnet': get_espnet,
+    'lednet': get_lednet,
+    'dfanet': get_dfanet,
+}
+
+def get_segmentation_model_names():
+    return list(models.keys())
 
 def get_segmentation_model(model, **kwargs):
-    models = {
-        'fcn32s': get_fcn32s,
-        'fcn16s': get_fcn16s,
-        'fcn8s': get_fcn8s,
-        'fcn': get_fcn,
-        'psp': get_psp,
-        'deeplabv3': get_deeplabv3,
-        'deeplabv3_plus': get_deeplabv3_plus,
-        'danet': get_danet,
-        'denseaspp': get_denseaspp,
-        'bisenet': get_bisenet,
-        'encnet': get_encnet,
-        'dunet': get_dunet,
-        'icnet': get_icnet,
-        'enet': get_enet,
-        'ocnet': get_ocnet,
-        'psanet': get_psanet,
-        'cgnet': get_cgnet,
-        'espnet': get_espnet,
-        'lednet': get_lednet,
-        'dfanet': get_dfanet,
-    }
     return models[model](**kwargs)
