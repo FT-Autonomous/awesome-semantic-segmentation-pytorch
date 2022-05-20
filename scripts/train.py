@@ -94,8 +94,8 @@ def parse_args():
                         help='skip validation during training')
     parser.add_argument('--project', type=str,
                         help='wandb project name')
-    parser.add_argument('--sweep', action='store_true',
-                        help='run as part of a sweep.')
+    parser.add_argument('--no-wandb', action='store_true',
+                        help='make wandb commands behave as noops')
     args = parser.parse_args()
 
     # default settings for epochs, batch_size and lr
@@ -122,9 +122,13 @@ def parse_args():
         }
         args.lr = lrs[args.dataset.lower()] / 8 * args.batch_size
 
-    if args.project:
+    
+    if args.no_wandb:
+        wandb.init(mode="disabled") # Does nothing
+    elif args.project:
         wandb.init(config=args, project=args.project)
-        
+    else:
+        wandb.init()
     return args
 
 
