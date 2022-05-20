@@ -213,7 +213,7 @@ def main():
     while index < args.number_to_generate:
         figure, axes = plt.subplots(rows, columns)
         images = random.choices(dataset, k=rows*columns)
-        for axis, (image, mask, _) in zip(axes if len(images) != 1 else [axes], images):
+        for axis, (image, mask, _) in zip(axes.flat if len(images) != 1 else [axes], images):
             axis.tick_params(which='both', left=False, labelleft=False, labelbottom=False, bottom=False)
             axis.imshow(cv.addWeighted(image, 0.6, mask_to_color(mask), 0.4, 0))
         if args.output_basename is None:
