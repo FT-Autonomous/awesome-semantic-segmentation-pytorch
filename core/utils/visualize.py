@@ -48,7 +48,6 @@ def show_prediction(img, pred, colors, background=0):
     im = np.array(img, np.uint8)
     set_img_color(im, pred, colors, background)
     out = np.array(im)
-
     return out
 
 
@@ -195,9 +194,15 @@ def main():
                         help='the number of rows and columns that the figures should have')
     parser.add_argument('--debug', action='store_true',
                         help='include a breakpoint right after arguments are parsed')
+    parser.add_argument('--image-opacity', type=float, default=0.5,
+                        help='the opacity of the image')
+    parser.add_argument('--mask-opacity', type=float, default=0.5,
+                        help='the opacity of the mask')
     args = parser.parse_args()
     
     dataset = get_segmentation_dataset(args.dataset, split='train' if args.augment else 'val')
+
+    assert args.image_opacity >= 0 and args.image_opacity <= 1, 'Image opacity must be in [0,1]'
     
     if args.debug:
         i, m, _ = dataset.sample()
@@ -214,8 +219,10 @@ def main():
         figure, axes = plt.subplots(rows, columns)
         images = random.choices(dataset, k=rows*columns)
         for axis, (image, mask, _) in zip(axes.flat if len(images) != 1 else [axes], images):
-            axis.tick_params(which='both', left=False, labelleft=False, labelbottom=False, bottom=False)
-            axis.imshow(cv.addWeighted(image, 0.6, mask_to_color(mask), 0.4, 0))
+            axis.axis('off')
+            result = cv.addWeighted(image, args.image_opacity,
+                                    mask_to_color(mask), args.mask_opacity, 0)
+            axis.imshow(result)
         if args.output_basename is None:
             plt.show()
         else:
