@@ -150,7 +150,7 @@ class Trainer(object):
         args.max_iters = args.epochs * args.iters_per_epoch
 
         train_sampler = make_data_sampler(train_dataset, shuffle=True, distributed=args.distributed)
-        train_batch_sampler = make_batch_data_sampler(train_sampler, args.batch_size, args.max_itergits)
+        train_batch_sampler = make_batch_data_sampler(train_sampler, args.batch_size, args.max_iters)
         val_sampler = make_data_sampler(val_dataset, False, args.distributed)
         val_batch_sampler = make_batch_data_sampler(val_sampler, args.batch_size)
 
