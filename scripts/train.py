@@ -124,7 +124,7 @@ def parse_args():
 
     
     if args.no_wandb:
-        wandb.init(mode="disabled") # Does nothing
+        wandb.init(mode="disabled")
     elif args.project:
         wandb.init(config=args, project=args.project)
     else:
@@ -150,7 +150,7 @@ class Trainer(object):
         args.max_iters = args.epochs * args.iters_per_epoch
 
         train_sampler = make_data_sampler(train_dataset, shuffle=True, distributed=args.distributed)
-        train_batch_sampler = make_batch_data_sampler(train_sampler, args.batch_size, args.max_iters)
+        train_batch_sampler = make_batch_data_sampler(train_sampler, args.batch_size, args.max_itergits)
         val_sampler = make_data_sampler(val_dataset, False, args.distributed)
         val_batch_sampler = make_batch_data_sampler(val_sampler, args.batch_size)
 
@@ -211,7 +211,6 @@ class Trainer(object):
         self.metric = SegmentationMetric(train_dataset.num_class)
 
         self.best_pred = 0.0
-        self.run = wandb.init()
 
     def train(self):
         save_to_disk = get_rank() == 0
