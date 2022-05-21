@@ -1,7 +1,7 @@
 metric:
   name: test_score
   goal: maximize
-method: bayes
+method: grid
 parameters:
   model:
     values: ['cgnet', 'icnet']
@@ -11,4 +11,8 @@ command:
   - ${env}
   - ${interpreter}
   - scripts/train.py
+  - --epochs 30
+  - --batch-size 8
+  - --base-size 600
+  - --crop-size 512
   - ${args}

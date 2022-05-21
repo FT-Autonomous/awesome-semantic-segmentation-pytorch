@@ -252,18 +252,21 @@ class Trainer(object):
                             f" || Loss: {losses_reduced:.4f}"
                             f" || Cost Time: {cost_time_string}"
                             f" || Estimated Time: {eta_string}")
-
-            if iteration % save_per_iters == 0 and save_to_disk:
-                save_checkpoint(self.model, self.args, is_best=False)
-
+                
             if not self.args.skip_val and iteration % val_per_iters == 0:
-                self.validation(step=0)
+                metadata = self.validation(step=1)
                 self.model.train()
+            else:
+                metadata = {}
+            
+            if iteration % save_per_iters == 0 and save_to_disk:
+                save_checkpoint(self.model, self.args, is_best=False, metadata=metadata)
+                
+            wandb.log({'training_losses/total' : losses_reduced.item(),
+                      **{'training_losses/'+label : loss.item() for label, loss in loss_dict.items()},
+                      **metadata})
 
-            wandb.log({'training_losses/'+loss:value.item() for loss,value in loss_dict.items()}, step=0)
-            wandb.log({'training_losses/total':losses_reduced.item()})
-
-        save_checkpoint(self.model, self.args, is_best=False)
+        save_checkpoint(self.model, self.args, metadata={}, is_best=False)
         total_training_time = time.time() - start_time
         total_training_str = str(datetime.timedelta(seconds=total_training_time))
         logger.info(f"Total training time: {total_training_str} ({total_training_time/max_iters:.4f}s / it)")
@@ -288,20 +291,18 @@ class Trainer(object):
             pixAcc, mIoU = self.metric.get()
             logger.info(f"Sample: {i+1:d}, Validation pixAcc: {pixAcc:.3f}, mIoU: {mIoU:.3f}")
         new_pred = (pixAcc + mIoU) / 2
-        metadata = {
-            'test_score':new_pred,
-            'test/pixelAcc':pixAcc,
-            'test/mIoU':mIoU
-        }
-        wandb.log(metadata, step=step)
         if new_pred > self.best_pred:
             is_best = True
             self.best_pred = new_pred
-        save_checkpoint(self.model, self.args, is_best, metadata)
+        metadata = {'test_score': mIoU,
+                'test_metrics/pixelAcc': pixAcc,
+                'test_metrics/mIoU': mIoU}
+        save_checkpoint(self.model, self.args, metadata, is_best)
         synchronize()
+        return metadata
 
 
-def save_checkpoint(model, args, is_best=False, metadata={}):
+def save_checkpoint(model, args, metadata, is_best=False):
     """Save Checkpoint"""
     directory = os.path.expanduser(args.save_dir)
     if not os.path.exists(directory):
@@ -315,7 +316,8 @@ def save_checkpoint(model, args, is_best=False, metadata={}):
     torch.save(model.state_dict(), filename)
     artifact = wandb.Artifact(base, type='weights')
     artifact.add_file(filename)
-    artifact.metadata = metadata
+    for key, value in metadata.items():
+        artifact.metadata[key] = value
     wandb.log_artifact(artifact)
     if is_best:
         best_filename = base + '_best_model.pth'
