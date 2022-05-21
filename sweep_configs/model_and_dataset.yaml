@@ -3,16 +3,16 @@ metric:
   goal: maximize
 method: grid
 parameters:
-  model:
-    values: ['cgnet', 'icnet']
-  dataset:
-    values: ['danish', 'ughent']
+  lr:
+    values: [0.01, 0.001, 0.0001, 0.0001]
 command:
   - ${env}
-  - ${interpreter}
+  - python3
   - scripts/train.py
-  - --epochs 30
-  - --batch-size 8
-  - --base-size 600
-  - --crop-size 512
+  - --dataset=danish
+  - --model=cgnet
+  - --epochs=50
+  - --batch-size=14
+  - --base-size=600
+  - --crop-size=512
   - ${args}
