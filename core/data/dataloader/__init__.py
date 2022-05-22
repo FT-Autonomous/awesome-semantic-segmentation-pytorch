@@ -9,6 +9,7 @@ from .ade import ADE20KSegmentation
 from .pascal_voc import VOCSegmentation
 from .pascal_aug import VOCAugSegmentation
 from .sbu_shadow import SBUSegmentation
+from .overfit import OverfitSegmentation
 
 datasets = {
     'ade20k': ADE20KSegmentation,
@@ -18,7 +19,8 @@ datasets = {
     'citys': CitySegmentation,
     'sbu': SBUSegmentation,
     'ughent':UGhentSegmentation,
-    'danish':DanishSegmentation
+    'danish':DanishSegmentation,
+    'overfit':OverfitSegmentation
 }
 
 def get_segmentation_dataset_names():

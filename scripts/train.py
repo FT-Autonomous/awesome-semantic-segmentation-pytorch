@@ -1,3 +1,16 @@
+import time
+import torchvision.transforms.functional as F
+import matplotlib.pyplot as plt
+from PIL import Image, ImageOps
+
+def show_image(img):
+    plt.imshow(img)
+    plt.show()
+
+def show_mask(mask):
+    #pil = mask_to_color()
+    pass
+
 import argparse
 import time
 import datetime
@@ -18,6 +31,7 @@ import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
+from core.utils.visualize import mask_to_color
 from core.data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
 from core.models.model_zoo import get_segmentation_model, get_segmentation_model_names
 from core.utils.loss import get_segmentation_loss
@@ -222,13 +236,17 @@ class Trainer(object):
 
         self.model.train()
         wandb.watch(self.model)
+        
+        table = wandb.Table(columns=['Image', 'Actual Mask', 'Predicted Mask'])
+        
         for iteration, (images, targets, _) in enumerate(self.train_loader):
+            
             iteration = iteration + 1
 
             images = images.to(self.device)
             targets = targets.to(self.device)
-
             outputs = self.model(images)
+            
             loss_dict = self.criterion(outputs, targets)
 
             losses = sum(loss for loss in loss_dict.values())
@@ -253,26 +271,35 @@ class Trainer(object):
                             f" || Cost Time: {cost_time_string}"
                             f" || Estimated Time: {eta_string}")
                 
-            if not self.args.skip_val and iteration % val_per_iters == 0:
-                metadata = self.validation(step=1)
+            if not self.args.skip_val and iteration % val_per_iters == 0:         
+                metadata = self.validation(table)   
+                for image, mask, predicted_mask in zip(images, targets, outputs[0]):
+                    image = F.to_pil_image(image)
+                    mask = Image.fromarray(mask_to_color(mask.cpu().numpy()))
+                    prediction_mask = Image.fromarray(mask_to_color(predicted_mask.argmax(0).cpu().numpy()))
+                    table.add_data(*[wandb.Image(ImageOps.scale(image, min(1, 256/args.crop_size), Image.NEAREST))
+                                     for image in (image, mask, prediction_mask)])
                 self.model.train()
             else:
                 metadata = {}
             
             if iteration % save_per_iters == 0 and save_to_disk:
                 save_checkpoint(self.model, self.args, is_best=False, metadata=metadata)
-                
+
+
             wandb.log({'training_losses/total' : losses_reduced.item(),
                       **{'training_losses/'+label : loss.item() for label, loss in loss_dict.items()},
                       **metadata})
 
+        wandb.log({'tech_debt':table})
+        
         save_checkpoint(self.model, self.args, metadata={}, is_best=False)
         total_training_time = time.time() - start_time
         total_training_str = str(datetime.timedelta(seconds=total_training_time))
         logger.info(f"Total training time: {total_training_str} ({total_training_time/max_iters:.4f}s / it)")
         wandb.finish()
         
-    def validation(self, step=1):
+    def validation(self, table):
         is_best = False
         self.metric.reset()
         if self.args.distributed:
@@ -287,16 +314,19 @@ class Trainer(object):
 
             with torch.no_grad():
                 outputs = model(image)
+
+            
             self.metric.update(outputs[0], target)
             pixAcc, mIoU = self.metric.get()
             logger.info(f"Sample: {i+1:d}, Validation pixAcc: {pixAcc:.3f}, mIoU: {mIoU:.3f}")
+                
         new_pred = (pixAcc + mIoU) / 2
         if new_pred > self.best_pred:
             is_best = True
             self.best_pred = new_pred
         metadata = {'test_score': mIoU,
-                'test_metrics/pixelAcc': pixAcc,
-                'test_metrics/mIoU': mIoU}
+                    'test_metrics/pixelAcc': pixAcc,
+                    'test_metrics/mIoU': mIoU}
         save_checkpoint(self.model, self.args, metadata, is_best)
         synchronize()
         return metadata
@@ -315,7 +345,9 @@ def save_checkpoint(model, args, metadata, is_best=False):
         model = model.module
     torch.save(model.state_dict(), filename)
     artifact = wandb.Artifact(base, type='weights')
-    artifact.add_file(filename)
+    artifact_filename = time.strftime("/tmp/%y%m%dT%H%M%S_") + base + '.pth'
+    shutil.copyfile(filename, artifact_filename)
+    artifact.add_file(artifact_filename)
     for key, value in metadata.items():
         artifact.metadata[key] = value
     wandb.log_artifact(artifact)
@@ -323,7 +355,6 @@ def save_checkpoint(model, args, metadata, is_best=False):
         best_filename = base + '_best_model.pth'
         best_filename = os.path.join(directory, best_filename)
         shutil.copyfile(filename, best_filename)
-
 
 if __name__ == '__main__':
     args = parse_args()
