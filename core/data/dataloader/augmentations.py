@@ -6,10 +6,10 @@ import torchvision.transforms.functional as F
 from skimage.util import random_noise
 
 # Some basic augmentations
-def augment(img, mask, p_affine=0.5, p_gauss=0.5, p_salt_and_pepper=0.5, p_random_erase=0.5, p_speckle=0.5):        
+def augment(img, mask, p_affine=0.5, p_gauss=0.7, p_salt_and_pepper=0.5, p_random_erase=0.5, p_speckle=0.7):        
     # Gaussian Blur
     if random.random() < p_gauss:
-        img = T.GaussianBlur(kernel_size=random.randrange(5,25,2), sigma=(0.3, 3.0))(img)
+        img = T.GaussianBlur(kernel_size=random.randrange(9,25,2), sigma=(2.0, 2.5))(img)
         
     # Random Affine
     if random.random() < p_affine:
@@ -36,5 +36,11 @@ def augment(img, mask, p_affine=0.5, p_gauss=0.5, p_salt_and_pepper=0.5, p_rando
         F.erase(mask, *random_erasing_params, inplace=True)
         img = F.to_pil_image(img)
         mask = F.to_pil_image(mask[0, ...])
+
+    # Speckle image
+    if random.random() < p_speckle:
+        img = np.asarray(img)
+        img = random_noise(img, mode='speckle', mean=0.2, var=0.2)
+        img = Image.fromarray(np.uint8(255 * img))
         
     return img, mask
