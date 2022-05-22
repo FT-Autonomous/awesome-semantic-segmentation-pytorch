@@ -216,7 +216,7 @@ def main():
         args.number_to_generate = 1
     
     while index < args.number_to_generate:
-        figure, axes = plt.subplots(rows, columns)
+        figure, axes = plt.subplots(rows, columns, tight_layout=True)
         images = random.choices(dataset, k=rows*columns)
         for axis, (image, mask, _) in zip(axes.flat if len(images) != 1 else [axes], images):
             axis.axis('off')
