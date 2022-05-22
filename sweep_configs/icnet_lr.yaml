@@ -1,0 +1,18 @@
+metric:
+  name: test_score
+  goal: maximize
+method: grid
+parameters:
+  lr:
+    values: [0.01, 0.001, 0.0005, 0.0001]
+command:
+  - ${env}
+  - python3
+  - scripts/train.py
+  - --dataset=overfit
+  - --model=icnet
+  - --epochs=40
+  - --batch-size=16
+  - --base-size=600
+  - --crop-size=512
+  - ${args}
