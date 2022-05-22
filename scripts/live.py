@@ -1,8 +1,7 @@
 import cv2 as cv
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
-import torchvision
+import torchvision.transforms as F
 import os
 import sys
 import argparse
@@ -16,11 +15,14 @@ sys.path.append(root_path)
 from core.models.model_zoo import get_segmentation_model
 
 parser = argparse.ArgumentParser(description='Live preview')
-parser.add_argument('--save-folder', default='~/.torch/models')
-parser.add_argument('--model', default='icnet')
+parser.add_argument('--model', default='cgnet')
 parser.add_argument('--dataset', default='ughent')
 parser.add_argument('--backbone', default='resnet50')
-parser.add_argument('--input')
+parser.add_argument('--weights', required=True)
+parser.add_argument('--input',
+                    help='the path to the imput image')
+parser.add_argument('--camera', type=int, default=0,
+                   help='which camera to use')
 args = parser.parse_args()
 
 
@@ -39,19 +41,31 @@ def mask_to_color(prediction):
     return colors[prediction.cpu().numpy()]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = get_segmentation_model(backbone=args.backbone, pretrained_base=False, root=args.save_folder, model=args.model, dataset=args.dataset, norm_layer=nn.BatchNorm2d).to(device)
-model.load_state_dict(torch.load('/home/vandewoe@ad.mee.tcd.ie/.torch/models/icnet_resnet50_ughent.pth', map_location=device))
+model = get_segmentation_model(backbone=args.backbone, pretrained_base=False, model=args.model, dataset=args.dataset, norm_layer=nn.BatchNorm2d).to(device)
+model.load_state_dict(torch.load(args.weights, map_location=device))
 
-model.eval()
-image = cv.cvtColor(cv.imread(args.input), cv.COLOR_BGR2RGB)
-normal = torchvision.transforms.Normalize([.485, .456, .406], [.229, .224, .225])
-tensor = normal(torch.from_numpy(image.transpose(2, 0, 1)).to(device).float())
-print('fully setup now')
-pred = model(tensor[None,...])
-print('predicted')
-mask = mask_to_color(pred[0][0].argmax(0))
+model.train()
 
-image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
-cv.imshow("Mask and Image", np.uint8((image + mask) / 2))
-cv.imshow("Mask only", np.uint8(cv.cvtColor(mask_to_color(pred[2][0].argmax(0)), cv.COLOR_RGB2BGR) * 20))
-cv.waitKey(10000)
+def predict_and_show(original_image, interval=25):
+    '''Takes a numpy HWC, BGR image, makes predictions
+    And shows them on the screen'''
+    resized_image = cv.resize(original_image, (512, 512), interpolation=cv.INTER_NEAREST)
+    image = cv.cvtColor(resized_image, cv.COLOR_BGR2RGB)
+    normal = F.Normalize([.485, .456, .406], [.229, .224, .225])
+    tensor = normal(torch.from_numpy(image.transpose(2, 0, 1)).to(device).float())
+    pred = torch.nn.Softmax(0)(model(tensor[None, ...])[0][0])
+    pred[0, pred[0, ...] > 0.05] = 1
+    mask = cv.cvtColor(mask_to_color(pred.argmax(0)), cv.COLOR_RGB2BGR)
+    #cv.imshow("Image only", resized_image)
+    cv.imshow("Mask and Image", np.uint8((resized_image + mask) / 2))
+    #cv.imshow("Mask only", mask)
+    cv.waitKey(interval)
+
+if args.input is None:
+    cam = cv.VideoCapture(args.camera)
+    while True:
+        result, original_image = cam.read()
+        predict_and_show(original_image)
+else:
+    original_image = cv.imread(args.input)
+    predict_and_show(original_image, interval=100000)
