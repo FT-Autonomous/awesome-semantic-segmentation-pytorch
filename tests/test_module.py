@@ -20,7 +20,7 @@ def testSyncBN():
         def _find_bn(module):
             for m in module.modules():
                 if isinstance(m, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d,
-                                  core.nn.SyncBatchNorm)):
+                                  fta.nn.SyncBatchNorm)):
                     return m
 
         def _syncParameters(bn1, bn2):
@@ -67,7 +67,7 @@ def testSyncBN():
         # _assert_tensor_close(_find_bn(bn1).running_var, _find_bn(bn2).running_var)
 
     bn = torch.nn.BatchNorm2d(10).cuda().double()
-    sync_bn = core.nn.SyncBatchNorm(10, inplace=True, sync=True).cuda().double()
+    sync_bn = fta.nn.SyncBatchNorm(10, inplace=True, sync=True).cuda().double()
     sync_bn = torch.nn.DataParallel(sync_bn).cuda()
     # check with unsync version
     # _check_batchnorm_result(bn, sync_bn, torch.rand(2, 1, 2, 2).double(), True, cuda=True)

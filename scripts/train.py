@@ -31,14 +31,14 @@ import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
-from core.utils.visualize import mask_to_color
-from core.data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
-from core.models.model_zoo import get_segmentation_model, get_segmentation_model_names
-from core.utils.loss import get_segmentation_loss
-from core.utils.distributed import *
-from core.utils.logger import setup_logger
-from core.utils.lr_scheduler import WarmupPolyLR
-from core.utils.score import SegmentationMetric
+from fta.utils.visualize import mask_to_color
+from fta.data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
+from fta.models.model_zoo import get_segmentation_model, get_segmentation_model_names
+from fta.utils.loss import get_segmentation_loss
+from fta.utils.distributed import *
+from fta.utils.logger import setup_logger
+from fta.utils.lr_scheduler import WarmupPolyLR
+from fta.utils.score import SegmentationMetric
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Semantic Segmentation Training With Pytorch')

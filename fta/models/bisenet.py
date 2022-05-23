@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.models.base_models.resnet import resnet18
-from core.nn import _ConvBNReLU
+from fta.models.base_models.resnet import resnet18
+from fta.nn import _ConvBNReLU
 
 __all__ = ['BiSeNet', 'get_bisenet', 'get_bisenet_resnet18_citys']
 

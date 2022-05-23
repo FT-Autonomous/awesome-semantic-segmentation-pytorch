@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.nn import _ConvBNPReLU, _ConvBN, _BNPReLU
+from fta.nn import _ConvBNPReLU, _ConvBN, _BNPReLU
 
 __all__ = ['EESP', 'EESPNet', 'eespnet']
 

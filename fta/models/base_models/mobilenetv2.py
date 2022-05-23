@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 
-from core.nn import _ConvBNReLU, _DepthwiseConv, InvertedResidual
+from fta.nn import _ConvBNReLU, _DepthwiseConv, InvertedResidual
 
 __all__ = ['MobileNet', 'MobileNetV2', 'get_mobilenet', 'get_mobilenet_v2',
            'mobilenet1_0', 'mobilenet_v2_1_0', 'mobilenet0_75', 'mobilenet_v2_0_75',

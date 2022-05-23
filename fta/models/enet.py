@@ -223,7 +223,7 @@ def get_enet(dataset='citys', backbone='', pretrained=False, root='~/.torch/mode
         'coco': 'coco',
         'citys': 'citys',
     }
-    from core.data.dataloader import datasets
+    from fta.data.dataloader import datasets
     model = ENet(datasets[dataset].NUM_CLASS, backbone=backbone, pretrained_base=pretrained_base, **kwargs)
     if pretrained:
         from .model_store import get_model_file

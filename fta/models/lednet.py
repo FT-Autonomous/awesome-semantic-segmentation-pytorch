@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.nn import _ConvBNReLU
+from fta.nn import _ConvBNReLU
 
 __all__ = ['LEDNet', 'get_lednet', 'get_lednet_citys']
 

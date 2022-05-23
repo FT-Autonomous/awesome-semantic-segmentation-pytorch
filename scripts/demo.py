@@ -9,8 +9,8 @@ sys.path.append(root_path)
 
 from torchvision import transforms
 from PIL import Image
-from core.utils.visualize import get_color_pallete
-from core.models import get_model
+from fta.utils.visualize import get_color_pallete
+from fta.models import get_model
 
 parser = argparse.ArgumentParser(
     description='Predict segmentation result from a given image')

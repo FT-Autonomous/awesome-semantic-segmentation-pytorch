@@ -13,12 +13,12 @@ import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
-from core.data.dataloader import get_segmentation_dataset
-from core.models.model_zoo import get_segmentation_model
-from core.utils.score import SegmentationMetric
-from core.utils.visualize import get_color_pallete
-from core.utils.logger import setup_logger
-from core.utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
+from fta.data.dataloader import get_segmentation_dataset
+from fta.models.model_zoo import get_segmentation_model
+from fta.utils.score import SegmentationMetric
+from fta.utils.visualize import get_color_pallete
+from fta.utils.logger import setup_logger
+from fta.utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
 
 from train import parse_args
 
