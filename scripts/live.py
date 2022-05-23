@@ -49,16 +49,19 @@ model.train()
 def predict_and_show(original_image, interval=25):
     '''Takes a numpy HWC, BGR image, makes predictions
     And shows them on the screen'''
-    resized_image = cv.resize(original_image, (512, 512), interpolation=cv.INTER_NEAREST)
+    new_height = int(512 * original_image.shape[1] / original_image.shape[0])
+    resized_image = cv.resize(original_image, (new_height - new_height % 64, 512), interpolation=cv.INTER_NEAREST)
     image = cv.cvtColor(resized_image, cv.COLOR_BGR2RGB)
     normal = F.Normalize([.485, .456, .406], [.229, .224, .225])
     tensor = normal(torch.from_numpy(image.transpose(2, 0, 1)).to(device).float())
     pred = torch.nn.Softmax(0)(model(tensor[None, ...])[0][0])
-    pred[0, pred[0, ...] > 0.05] = 1
+    #pred[0, pred[0, ...] > 0.2] = 1
     mask = cv.cvtColor(mask_to_color(pred.argmax(0)), cv.COLOR_RGB2BGR)
     #cv.imshow("Image only", resized_image)
-    cv.imshow("Mask and Image", np.uint8((resized_image + mask) / 2))
+    result = np.uint8(resized_image // 4 + 3.0 * mask / 2.0)
+    cv.imshow("Mask and Image", result)
     #cv.imshow("Mask only", mask)
+    #cv.imwrite(f"test/{random.randint(0, 1000000)}.png", result)
     cv.waitKey(interval)
 
 if args.input is None:
