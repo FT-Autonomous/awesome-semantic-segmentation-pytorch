@@ -51,8 +51,8 @@ model.train()
 def predict(image, resize=True):
     '''Takes a numpy HWC, BGR image, returns a numpy HWC, BGR image with the user friendly masks'''
     if resize:
-        new_height = int(512 * original_image.shape[1] / original_image.shape[0])
-        image = cv.resize(original_image, (new_height - new_height % 64, 512), interpolation=cv.INTER_NEAREST)
+        new_height = int(512 * image.shape[1] / image.shape[0])
+        image = cv.resize(image, (new_height - new_height % 64, 512), interpolation=cv.INTER_NEAREST)
     rgb_image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     normal = F.Normalize([.485, .456, .406], [.229, .224, .225])
     tensor = normal(torch.from_numpy(rgb_image.transpose(2, 0, 1)).to(device).float())
