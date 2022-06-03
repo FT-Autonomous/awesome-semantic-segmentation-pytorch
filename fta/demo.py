@@ -3,14 +3,10 @@ import sys
 import argparse
 import torch
 
-cur_path = os.path.abspath(os.path.dirname(__file__))
-root_path = os.path.split(cur_path)[0]
-sys.path.append(root_path)
-
 from torchvision import transforms
 from PIL import Image
-from fta.utils.visualize import get_color_pallete
-from fta.models import get_model
+from .utils.visualize import get_color_pallete
+from .models import get_model
 
 parser = argparse.ArgumentParser(
     description='Predict segmentation result from a given image')

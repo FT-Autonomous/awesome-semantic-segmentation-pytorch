@@ -3,13 +3,10 @@ import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 
+
 def show_image(img):
     plt.imshow(img)
     plt.show()
-
-def show_mask(mask):
-    #pil = mask_to_color()
-    pass
 
 import argparse
 import time
@@ -19,10 +16,6 @@ import shutil
 import sys
 import re
 
-cur_path = os.path.abspath(os.path.dirname(__file__))
-root_path = os.path.split(cur_path)[0]
-sys.path.append(root_path)
-
 import wandb
 
 import torch
@@ -31,14 +24,14 @@ import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
-from fta.utils.visualize import mask_to_color
-from fta.data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
-from fta.models.model_zoo import get_segmentation_model, get_segmentation_model_names
-from fta.utils.loss import get_segmentation_loss
-from fta.utils.distributed import *
-from fta.utils.logger import setup_logger
-from fta.utils.lr_scheduler import WarmupPolyLR
-from fta.utils.score import SegmentationMetric
+from .utils.visualize import mask_to_color
+from .data.dataloader import get_segmentation_dataset, get_segmentation_dataset_names
+from .models.model_zoo import get_segmentation_model, get_segmentation_model_names
+from .utils.loss import get_segmentation_loss
+from .utils.distributed import *
+from .utils.logger import setup_logger
+from .utils.lr_scheduler import WarmupPolyLR
+from .utils.score import SegmentationMetric
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Semantic Segmentation Training With Pytorch')

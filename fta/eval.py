@@ -3,22 +3,18 @@ from __future__ import print_function
 import os
 import sys
 
-cur_path = os.path.abspath(os.path.dirname(__file__))
-root_path = os.path.split(cur_path)[0]
-sys.path.append(root_path)
-
 import torch
 import torch.nn as nn
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 from torchvision import transforms
-from fta.data.dataloader import get_segmentation_dataset
-from fta.models.model_zoo import get_segmentation_model
-from fta.utils.score import SegmentationMetric
-from fta.utils.visualize import get_color_pallete
-from fta.utils.logger import setup_logger
-from fta.utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
+from .data.dataloader import get_segmentation_dataset
+from .models.model_zoo import get_segmentation_model
+from .utils.score import SegmentationMetric
+from .utils.visualize import get_color_pallete
+from .utils.logger import setup_logger
+from .utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
 
 from train import parse_args
 

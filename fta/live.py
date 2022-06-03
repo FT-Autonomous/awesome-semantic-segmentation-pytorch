@@ -8,11 +8,7 @@ import argparse
 import torch
 from torch import nn
 
-cur_path = os.path.abspath(os.path.dirname(__file__))
-root_path = os.path.split(cur_path)[0]
-sys.path.append(root_path)
-
-from fta.models.model_zoo import get_segmentation_model
+from .models.model_zoo import get_segmentation_model
 
 parser = argparse.ArgumentParser(description='Live preview')
 parser.add_argument('--model', default='cgnet')
