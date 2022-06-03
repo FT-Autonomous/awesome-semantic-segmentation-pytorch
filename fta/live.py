@@ -27,7 +27,7 @@ def scale(image, output_width):
     new_height = int(output_width * image.shape[1] / image.shape[0])
     return cv.resize(image, (new_height - new_height % 64, output_width), interpolation=cv.INTER_NEAREST)
 
-def predict(image, resize=True):
+def predict(image, device, resize=True):
     '''Takes an OpenCV BGR image and returns class probabilities with the shape HxWx5'''
     rgb_image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     normal = F.Normalize([.485, .456, .406], [.229, .224, .225])
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         while True:
             result, image = cam.read()
             image = scale(image, 512)
-            show(merge(image, colorise(predict(image)), image_vs_mask=intensity), interval=1)
+            show(merge(image, colorise(predict(image, device)), image_vs_mask=intensity), interval=1)
     else:
         original_image = cv.imread(args.input)
         mask = merge(original_image, colorise(predict(original_image)))
