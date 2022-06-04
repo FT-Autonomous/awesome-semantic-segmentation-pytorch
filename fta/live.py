@@ -60,9 +60,9 @@ if __name__ == "__main__":
     parser.add_argument('--camera', type=int, default=0,
                         help='which camera to use')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--image-intensity', type=int, default=0.5,
+    group.add_argument('--image-intensity', type=float, default=0.5,
                         help='multiplier that will be applied to the image when it\'s added to the mask')
-    group.add_argument('--mask-intensity', type=int, default=0.5,
+    group.add_argument('--mask-intensity', type=float, default=0.5,
                         help='multiplier that will be applied to the mask when it\'ts added to the image')
     args = parser.parse_args()
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     assert 0 <= intensity and intensity <= 1, "Intensity must be in [0, 1]"
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = get_segmentation_model(backbone=args.backbone, pretrained_base=False, model=args.model, dataset=args.dataset, norm_layer=nn.BatchNorm2d).to(device)
+    model = get_segmentation_model(backbone=args.backbone, pretrained_base=False, model=args.model, dataset=args.dataset, norm_layer=torch.nn.BatchNorm2d).to(device)
     model.load_state_dict(torch.load(args.weights, map_location=device))
     
     model.train()
