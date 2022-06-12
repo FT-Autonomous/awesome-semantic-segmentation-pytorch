@@ -1,11 +1,10 @@
 import cv2 as cv
 import numpy as np
-from PIL import Image
 import torchvision.transforms as F
 import os
 import sys
-import argparse
 import torch
+import torch_tensorrt
 
 from .models.model_zoo import get_segmentation_model
 
@@ -23,6 +22,10 @@ def mask_to_color(prediction):
 def scale(image, output_width):
     new_height = int(output_width * image.shape[1] / image.shape[0])
     return cv.resize(image, (new_height - new_height % 64, output_width), interpolation=cv.INTER_NEAREST)
+
+def half(image, output_shape=None):
+    halfed_image = image[:, :image.shape[1]//2, :]
+    return cv.resize(halfed_image, output_shape) if output_shape else halfed_image
 
 def predict_raw(image, model, device):
     '''Takes an OpenCV BGR image and returns class probabilities with the shape HxWx5'''
@@ -47,18 +50,27 @@ def show(image, interval=10000):
     cv.moveWindow("Mask and Image", 30, 30)
     cv.waitKey(interval)
 
+def do_it_all(model, device, cam, image_vs_mask=0.5):
+    result, image = cam.read()
+    image = half(image, (1792//2, 512))
+    show(merge(image, colorise(predict(image, model, device)), image_vs_mask=image_vs_mask), interval=1)
+
 if __name__ == "__main__":
+    import argparse
     parser = argparse.ArgumentParser(description='Live preview')
-    parser.add_argument('--model', default='cgnet')
+    parser.add_argument('--model', default='cgnet'
+                        help='The name of the model to load OR the path to a torchscript model containing both the computational graph and the weights')
     parser.add_argument('--dataset', default='ughent') # The dataset just gives the number of classes...
     parser.add_argument('--backbone', default='resnet50')
-    parser.add_argument('--weights', required=True)
+    parser.add_argument('--weights')
     parser.add_argument('--input',
                         help='the path to the input image')
     parser.add_argument('--output',
                         help='the path where the mask will be saved')
-    parser.add_argument('--camera', type=int, default=0,
+    parser.add_argument('--camera', type=int, default=1,
                         help='which camera to use')
+    parser.add_argument('--debug', action='store_true',
+                        help='Drops into the debug prompt after the model has been loaded')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--image-intensity', type=float, default=0.5,
                         help='multiplier that will be applied to the image when it\'s added to the mask')
@@ -73,17 +85,21 @@ if __name__ == "__main__":
     assert 0 <= intensity and intensity <= 1, "Intensity must be in [0, 1]"
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = get_segmentation_model(backbone=args.backbone, pretrained_base=False, model=args.model, dataset=args.dataset, norm_layer=torch.nn.BatchNorm2d).to(device)
-    model.load_state_dict(torch.load(args.weights, map_location=device))
-    
+    if args.model.endswith(".ts"):
+        model = torch.jit.load(args.model, map_location=device)
+    else:
+        model = get_segmentation_model(backbone=args.backbone, pretrained_base=False, model=args.model, dataset=args.dataset, norm_layer=torch.nn.BatchNorm2d).to(device)
+        model.load_state_dict(torch.load(args.weights, map_location=device))
+        model = torch.jit.script(model)
     model.train()
+
+    if args.debug:
+        breakpoint()
         
     if args.input is None:
         cam = cv.VideoCapture(args.camera)
         while True:
-            result, image = cam.read()
-            image = scale(image, 512)
-            show(merge(image, colorise(predict(image, model, device)), image_vs_mask=intensity), interval=1)
+            do_it_all(model, device, cam, intensity)
     else:
         original_image = cv.imread(args.input)
         mask = merge(original_image, colorise(predict(original_image, model, device)))
