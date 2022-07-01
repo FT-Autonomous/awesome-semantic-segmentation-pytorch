@@ -4,7 +4,6 @@ import torchvision.transforms as F
 import os
 import sys
 import torch
-import torch_tensorrt
 
 from .models.model_zoo import get_segmentation_model
 
@@ -58,7 +57,7 @@ def do_it_all(model, device, cam, image_vs_mask=0.5):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Live preview')
-    parser.add_argument('--model', default='cgnet'
+    parser.add_argument('--model', default='cgnet',
                         help='The name of the model to load OR the path to a torchscript model containing both the computational graph and the weights')
     parser.add_argument('--dataset', default='ughent') # The dataset just gives the number of classes...
     parser.add_argument('--backbone', default='resnet50')
