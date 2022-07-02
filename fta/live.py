@@ -4,7 +4,6 @@ import torchvision.transforms as F
 import os
 import sys
 import torch
-import torch_tensorrt
 
 from .models.model_zoo import get_segmentation_model
 
@@ -58,7 +57,7 @@ def do_it_all(model, device, cam, image_vs_mask=0.5):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Live preview')
-    parser.add_argument('--model', default='cgnet'
+    parser.add_argument('--model', default='cgnet',
                         help='The name of the model to load OR the path to a torchscript model containing both the computational graph and the weights')
     parser.add_argument('--dataset', default='ughent') # The dataset just gives the number of classes...
     parser.add_argument('--backbone', default='resnet50')
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     group.add_argument('--image-intensity', type=float, default=0.5,
                         help='multiplier that will be applied to the image when it\'s added to the mask')
     group.add_argument('--mask-intensity', type=float, default=0.5,
-                        help='multiplier that will be applied to the mask when it\'ts added to the image')
+                        help='multiplier that will be applied to the mask when it\'s added to the image')
     args = parser.parse_args()
 
     if args.mask_intensity != 0.5:
