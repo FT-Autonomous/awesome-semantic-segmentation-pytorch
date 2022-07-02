@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 from PIL import Image
-from fta.data.dataloader.segbase import SegmentationDataset
+from ft_semantic_segmentation.data.dataloader.segbase import SegmentationDataset
 
 
 class LIPSegmentation(SegmentationDataset):

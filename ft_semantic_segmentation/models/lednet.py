@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fta.nn import _ConvBNReLU
+from ft_semantic_segmentation.nn import _ConvBNReLU
 
 __all__ = ['LEDNet', 'get_lednet', 'get_lednet_citys']
 

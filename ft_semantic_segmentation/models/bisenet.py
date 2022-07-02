@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fta.models.base_models.resnet import resnet18
-from fta.nn import _ConvBNReLU
+from ft_semantic_segmentation.models.base_models.resnet import resnet18
+from ft_semantic_segmentation.nn import _ConvBNReLU
 
 __all__ = ['BiSeNet', 'get_bisenet', 'get_bisenet_resnet18_citys']
 

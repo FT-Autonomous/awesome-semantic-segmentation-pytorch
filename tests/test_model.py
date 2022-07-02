@@ -14,11 +14,11 @@ root_path = os.path.split(cur_path)[0]
 sys.path.append(root_path)
 
 from torchvision import transforms
-from fta.models.model_zoo import get_segmentation_model
-from fta.utils.loss import MixSoftmaxCrossEntropyLoss, EncNetLoss, ICNetLoss
-from fta.utils.lr_scheduler import LRScheduler
-from fta.utils.score import hist_info, compute_score
-from fta.utils.visualize import get_color_pallete
+from ft_semantic_segmentation.models.model_zoo import get_segmentation_model
+from ft_semantic_segmentation.utils.loss import MixSoftmaxCrossEntropyLoss, EncNetLoss, ICNetLoss
+from ft_semantic_segmentation.utils.lr_scheduler import LRScheduler
+from ft_semantic_segmentation.utils.score import hist_info, compute_score
+from ft_semantic_segmentation.utils.visualize import get_color_pallete
 from PIL import Image
 
 

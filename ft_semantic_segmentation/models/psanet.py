@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fta.nn import _ConvBNReLU
-from fta.models.segbase import SegBaseModel
-from fta.models.fcn import _FCNHead
+from ft_semantic_segmentation.nn import _ConvBNReLU
+from ft_semantic_segmentation.models.segbase import SegBaseModel
+from ft_semantic_segmentation.models.fcn import _FCNHead
 
 __all__ = ['PSANet', 'get_psanet', 'get_psanet_resnet50_voc', 'get_psanet_resnet101_voc',
            'get_psanet_resnet152_voc', 'get_psanet_resnet50_citys', 'get_psanet_resnet101_citys',
@@ -122,7 +122,7 @@ def get_psanet(dataset='pascal_voc', backbone='resnet50', pretrained=False, root
         'coco': 'coco',
         'citys': 'citys',
     }
-    from fta.data.dataloader import datasets
+    from ft_semantic_segmentation.data.dataloader import datasets
     model = PSANet(datasets[dataset].NUM_CLASS, backbone=backbone, pretrained_base=pretrained_base, **kwargs)
     if pretrained:
         from .model_store import get_model_file

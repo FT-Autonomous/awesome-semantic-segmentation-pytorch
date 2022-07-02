@@ -2,12 +2,12 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'fta'
+package_name = 'ft_semantic_segmentation'
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, 'fta/models', 'fta/models/base_models', 'fta/utils', 'fta/nn', 'fta/data', 'fta/data/dataloader'],
+    packages=[package_name, 'ft_semantic_segmentation/models', 'ft_semantic_segmentation/models/base_models', 'ft_semantic_segmentation/utils', 'ft_semantic_segmentation/nn', 'ft_semantic_segmentation/data', 'ft_semantic_segmentation/data/dataloader'],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),

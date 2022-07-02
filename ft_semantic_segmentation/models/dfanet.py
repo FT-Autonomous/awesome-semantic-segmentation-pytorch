@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fta.models.base_models import Enc, FCAttention, get_xception_a
-from fta.nn import _ConvBNReLU
+from ft_semantic_segmentation.models.base_models import Enc, FCAttention, get_xception_a
+from ft_semantic_segmentation.nn import _ConvBNReLU
 
 __all__ = ['DFANet', 'get_dfanet', 'get_dfanet_citys']
 
