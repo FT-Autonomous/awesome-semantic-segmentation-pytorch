@@ -7,7 +7,7 @@ package_name = 'ft_semantic_segmentation'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, 'ft_semantic_segmentation/models', 'ft_semantic_segmentation/models/base_models', 'ft_semantic_segmentation/utils', 'ft_semantic_segmentation/nn', 'ft_semantic_segmentation/data', 'ft_semantic_segmentation/data/dataloader'],
+    packages=[package_name, 'ft_semantic_segmentation.models', 'ft_semantic_segmentation.models.base_models', 'ft_semantic_segmentation.utils', 'ft_semantic_segmentation.live', 'ft_semantic_segmentation.nn', 'ft_semantic_segmentation.data', 'ft_semantic_segmentation.data.dataloader'],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
